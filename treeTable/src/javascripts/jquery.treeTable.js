@@ -15,7 +15,7 @@
   $.fn.treeTable = function(opts) {
     options = $.extend({}, $.fn.treeTable.defaults, opts);
     
-    return this.each(function() {
+    this.each(function() {
       $(this).addClass("treeTable").find("tbody tr").each(function() {
         // Initialize root nodes only if possible
         if(!options.expandable || $(this)[0].className.search(options.childPrefix) == -1) {
@@ -32,6 +32,8 @@
         }
       });
     });
+    fixZebra(this.find('tr').eq(0));
+    return this;
   };
   
   $.fn.treeTable.defaults = {
@@ -54,6 +56,7 @@
       
       this.style.display = "none"; // Performance! $(this).hide() is slow...
     });
+	fixZebra(this);
     
     return this;
   };
@@ -72,6 +75,7 @@
       // this.style.display = "table-row"; // Unfortunately this is not possible with IE :-(
       $(this).show();
     });
+    fixZebra(this);
     
     return this;
   };
@@ -84,6 +88,24 @@
     });
     
     return this;
+  };
+  
+  // Add a entire branch (from async) to +destination+
+  $.fn.appendRawBranchTo = function(destination) {
+	  this.reverse().each(function(){
+		  var node = $(this);
+		  var parent = parentOf(node);
+		  node.insertAfter(destination);
+		  
+		  initialize(node);
+		  // Initializing indents the row when it is a parent.
+		  if (!node.hasClass('parent')) {
+			  //move(node, destination);
+			  indent(node, (ancestorsOf(node).length - 0) * options.indent);
+		  }
+	  }).reverse();
+	  fixZebra(this);
+	  return this;
   };
 
   // Add an entire branch to +destination+
@@ -216,4 +238,11 @@
       }
     }
   };
+  
+  function fixZebra(tr) {
+	var t = $(tr).parents('table').eq(0).find('tr:visible');
+	t.filter(':odd').removeClass('even').addClass('odd');
+	t.filter(':even').removeClass('odd').addClass('even');
+	return this;
+  }
 })(jQuery);
